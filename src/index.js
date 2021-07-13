@@ -4,11 +4,27 @@ import './index.css'
 import App from './App'
 import reportWebVitals from './reportWebVitals'
 
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client'
+import {
+  ApolloClient,
+  ApolloProvider,
+  createHttpLink,
+  InMemoryCache,
+} from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
+
 import { ThemeProvider } from '@planning-center/ui-kit'
 
+const httpLink = createHttpLink({ uri: 'https://api.github.com/graphql' })
+
+const authLink = setContext((_, { headers }) => {
+  // get the authentication token from local storage if it exists
+  const token = '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'
+  // return the headers to the context so httpLink can read them
+  return { headers: { ...headers, authorization: `Bearer ${token}` } }
+})
+
 const client = new ApolloClient({
-  uri: 'https://48p1r2roz4.sse.codesandbox.io',
+  link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 })
 
