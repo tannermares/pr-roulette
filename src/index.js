@@ -18,7 +18,7 @@ const httpLink = createHttpLink({ uri: 'https://api.github.com/graphql' })
 
 const authLink = setContext((_, { headers }) => {
   // get the authentication token from local storage if it exists
-  const token = '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'
+  const token = process.env.REACT_APP_GITHUB_PAT
   // return the headers to the context so httpLink can read them
   return { headers: { ...headers, authorization: `Bearer ${token}` } }
 })

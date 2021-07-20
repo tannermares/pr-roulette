@@ -1,13 +1,27 @@
 import React from 'react'
 import { useQuery, gql } from '@apollo/client'
-import { StackView, Link, Text } from '@planning-center/ui-kit'
+import {
+  Divider,
+  Heading,
+  StackView,
+  Spinner,
+  Link,
+  Text,
+} from '@planning-center/ui-kit'
 
 function App() {
   const { data, error, loading } = useQuery(QUERY, {
-    q: 'is:pull-request language:java state:open',
+    variables: {
+      q: 'is:pull-request language:java state:open -author:app/dependabot -author:snyk-bot',
+    },
   })
 
-  if (loading) return <Text>Loading</Text>
+  if (loading)
+    return (
+      <StackView distribution="center" height="100vh" textAlign="center">
+        <Spinner size="xxl" />
+      </StackView>
+    )
   if (error)
     return (
       <StackView distribution="center" height="100vh" textAlign="center">
@@ -15,31 +29,35 @@ function App() {
       </StackView>
     )
 
-  console.log(data)
-
   return (
     <StackView distribution="center" height="100vh" textAlign="center">
-      {/* {issues.map((issue) => (
-        <>
-          <Text>{issue.node.title}</Text>
-          <Link>{issue.node.url}</Link>
-        </>
-      ))} */}
+      <Heading>Pull Request Roulette</Heading>
+      <Divider marginBottom={2} />
+      {data.search.nodes.map((pullRequest) => (
+        <Link
+          key={pullRequest.permalink}
+          to={pullRequest.permalink}
+          external
+          margin={1}
+        >
+          {pullRequest.title}
+        </Link>
+      ))}
     </StackView>
   )
 }
 
 const QUERY = gql`
-  query PRSearch {
-    search(
-      first: 10
-      query: "is:pull-request language:java state:open"
-      type: ISSUE
-    ) {
-      edges {
-        node {
-          ... on Issue {
-            resourcePath
+  query PRSearch($q: String!) {
+    search(first: 10, query: $q, type: ISSUE) {
+      nodes {
+        ... on PullRequest {
+          permalink
+          title
+          author {
+            ... on Bot {
+              login
+            }
           }
         }
       }
