@@ -16,7 +16,7 @@ function App() {
   const [query, setQuery] = useState('')
   const { data, error, loading, refetch } = useQuery(QUERY, {
     variables: {
-      q: `${query} in:title,body,comments is:pull-request language:${language} state:open -author:app/dependabot -author:snyk-bot`,
+      q: `${query} in:title,body,comments is:pull-request language:${language} state:open -author:app/dependabot -author:snyk-bot sort:reactions`,
     },
   })
   const didMountRef = useRef()
@@ -27,17 +27,17 @@ function App() {
   }, [language, query])
 
   return (
-    <StackView distribution="center" height="100vh" >
-      <StackView 
+    <StackView distribution="center" height="100vh">
+      <StackView
         axis="horizontal"
         distribution="center"
         marginBottom={2}
         spacing={2}
       >
         <Heading>Pull Request Roulette</Heading>
-        <Input 
-          placeholder='Filter by stuff' 
-          value={query} 
+        <Input
+          placeholder="Filter by stuff"
+          value={query}
           onChange={({ target: { value } }) => setQuery(value)}
         />
         <Select
@@ -50,31 +50,34 @@ function App() {
           <Select.Option value="swift">Swift</Select.Option>
           <Select.Option value="ruby">Ruby</Select.Option>
           <Select.Option value="java">Java</Select.Option>
-          <Select.Option value="PHP" disabled>PHP</Select.Option>
+          <Select.Option value="PHP" disabled>
+            PHP
+          </Select.Option>
         </Select>
       </StackView>
       <Divider marginBottom={2} />
-      {loading ?
+      {loading ? (
         <StackView distribution="center" textAlign="center">
           <Spinner size="xxl" />
         </StackView>
-        : error 
-        ? <StackView distribution="center" textAlign="center">
-            <Text>{JSON.stringify(error)}</Text>
-          </StackView>
-        : <StackView axis="vertical" alignItems="center" >
-            {data.search.nodes.map((pullRequest) => (
-              <Link
-                key={pullRequest.permalink}
-                to={pullRequest.permalink}
-                external
-                margin={1}
-              >
-                {pullRequest.title}
-              </Link>
-            ))}
-          </StackView>
-        }
+      ) : error ? (
+        <StackView distribution="center" textAlign="center">
+          <Text>{JSON.stringify(error)}</Text>
+        </StackView>
+      ) : (
+        <StackView axis="vertical" alignItems="center">
+          {data.search.nodes.map((pullRequest) => (
+            <Link
+              key={pullRequest.permalink}
+              to={pullRequest.permalink}
+              external
+              margin={1}
+            >
+              {pullRequest.title}
+            </Link>
+          ))}
+        </StackView>
+      )}
     </StackView>
   )
 }
