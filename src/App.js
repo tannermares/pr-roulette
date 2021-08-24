@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useQuery, gql } from '@apollo/client'
 import {
-  Divider,
+  DataTable,
   Heading,
   Input,
+  Pagination,
   Select,
   StackView,
-  Spinner,
-  Link,
   Text,
 } from '@planning-center/ui-kit'
 
 function App() {
   const [language, setLanguage] = useState('javascript')
+  const [page, setPage] = useState(1)
   const [query, setQuery] = useState('')
   const { data, error, loading, refetch } = useQuery(QUERY, {
     variables: {
@@ -27,12 +27,18 @@ function App() {
   }, [language, query])
 
   return (
-    <StackView distribution="center" height="100vh">
+    <StackView position="relative" height="50vh">
       <StackView
         axis="horizontal"
         distribution="center"
-        marginBottom={2}
         spacing={2}
+        padding={1}
+        position="sticky"
+        top={0}
+        zIndex={99999}
+        backgroundColor="whitesmoke"
+        borderBottomWidth={1}
+        borderBottomColor="darkgray"
       >
         <Heading>Pull Request Roulette</Heading>
         <Input
@@ -55,27 +61,34 @@ function App() {
           </Select.Option>
         </Select>
       </StackView>
-      <Divider marginBottom={2} />
-      {loading ? (
-        <StackView distribution="center" textAlign="center">
-          <Spinner size="xxl" />
-        </StackView>
-      ) : error ? (
+      {error ? (
         <StackView distribution="center" textAlign="center">
           <Text>{JSON.stringify(error)}</Text>
         </StackView>
       ) : (
-        <StackView axis="vertical" alignItems="center">
-          {data.search.nodes.map((pullRequest) => (
-            <Link
-              key={pullRequest.permalink}
-              to={pullRequest.permalink}
-              external
-              margin={1}
-            >
-              {pullRequest.title}
-            </Link>
-          ))}
+        <StackView overflow="scroll">
+          <DataTable
+            columns={[
+              {
+                id: 'title',
+                header: 'Title',
+                cell: 'title',
+              },
+              {
+                id: 'permalink',
+                header: 'Link',
+                cell: 'permalink',
+              },
+            ]}
+            data={data ? data.search.nodes : []}
+            loading={loading}
+          />
+          <Pagination
+            currentPage={page}
+            onPageChange={(value) => setPage(value)}
+            totalPages={10}
+            visiblePages={10}
+          />
         </StackView>
       )}
     </StackView>
