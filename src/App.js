@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useQuery, gql } from '@apollo/client'
 import {
+  Button,
   DataTable,
   Heading,
   Input,
-  Pagination,
   Select,
   StackView,
   Text,
@@ -12,11 +12,11 @@ import {
 
 function App() {
   const [language, setLanguage] = useState('javascript')
-  const [page, setPage] = useState(1)
   const [query, setQuery] = useState('')
+  const queryString = `${query} in:title,body,comments is:pull-request language:${language} state:open -author:app/dependabot -author:snyk-bot sort:reactions`
   const { data, error, loading, refetch } = useQuery(QUERY, {
     variables: {
-      q: `${query} in:title,body,comments is:pull-request language:${language} state:open -author:app/dependabot -author:snyk-bot sort:reactions`,
+      q: queryString,
     },
   })
   const didMountRef = useRef()
@@ -26,8 +26,16 @@ function App() {
     else didMountRef.current = true
   }, [language, query])
 
+  function handlePreviousPage() {
+    refetch({ before: data?.search?.pageInfo?.startCursor, q: queryString })
+  }
+
+  function handleNextPage() {
+    refetch({ after: data?.search?.pageInfo?.endCursor, q: queryString })
+  }
+
   return (
-    <StackView position="relative" height="50vh">
+    <StackView position="relative" height="100vh">
       <StackView
         axis="horizontal"
         distribution="center"
@@ -66,7 +74,7 @@ function App() {
           <Text>{JSON.stringify(error)}</Text>
         </StackView>
       ) : (
-        <StackView overflow="scroll">
+        <StackView>
           <DataTable
             columns={[
               {
@@ -74,21 +82,30 @@ function App() {
                 header: 'Title',
                 cell: 'title',
               },
-              {
-                id: 'permalink',
-                header: 'Link',
-                cell: 'permalink',
-              },
             ]}
-            data={data ? data.search.nodes : []}
+            data={data?.search?.nodes || []}
+            empty={<Text>EMPTY</Text>}
             loading={loading}
+            getRowLink={({ permalink }) => permalink}
           />
-          <Pagination
-            currentPage={page}
-            onPageChange={(value) => setPage(value)}
-            totalPages={10}
-            visiblePages={10}
-          />
+          <StackView axis="horizontal" distribution="center" spacing={2}>
+            <Button
+              disabled={!data?.search?.pageInfo?.hasPreviousPage}
+              icon={{ name: 'caret-left' }}
+              onClick={handlePreviousPage}
+              size="lg"
+              title="Back"
+              variant="naked"
+            />
+            <Button
+              disabled={!data?.search?.pageInfo?.hasNextPage}
+              icon={{ name: 'caret-right' }}
+              onClick={handleNextPage}
+              size="lg"
+              title="Forward"
+              variant="naked"
+            />
+          </StackView>
         </StackView>
       )}
     </StackView>
@@ -96,8 +113,8 @@ function App() {
 }
 
 const QUERY = gql`
-  query PRSearch($q: String!) {
-    search(first: 10, query: $q, type: ISSUE) {
+  query PRSearch($q: String!, $before: String, $after: String) {
+    search(after: $after, before: $before, first: 10, query: $q, type: ISSUE) {
       nodes {
         ... on PullRequest {
           permalink
@@ -108,6 +125,13 @@ const QUERY = gql`
             }
           }
         }
+      }
+      issueCount
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
       }
     }
   }
