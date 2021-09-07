@@ -15,9 +15,7 @@ function App() {
   const [query, setQuery] = useState('')
   const queryString = `${query} in:title,body,comments is:pull-request language:${language} state:open -author:app/dependabot -author:snyk-bot sort:reactions`
   const { data, error, loading, refetch } = useQuery(QUERY, {
-    variables: {
-      q: queryString,
-    },
+    variables: { first: 10, q: queryString },
   })
   const didMountRef = useRef()
 
@@ -27,11 +25,21 @@ function App() {
   }, [language, query])
 
   function handlePreviousPage() {
-    refetch({ before: data?.search?.pageInfo?.startCursor, q: queryString })
+    refetch({
+      before: data?.search?.pageInfo?.startCursor,
+      last: 10,
+      after: null,
+      first: null,
+    })
   }
 
   function handleNextPage() {
-    refetch({ after: data?.search?.pageInfo?.endCursor, q: queryString })
+    refetch({
+      after: data?.search?.pageInfo?.endCursor,
+      first: 10,
+      before: null,
+      last: null,
+    })
   }
 
   return (
@@ -113,8 +121,21 @@ function App() {
 }
 
 const QUERY = gql`
-  query PRSearch($q: String!, $before: String, $after: String) {
-    search(after: $after, before: $before, first: 10, query: $q, type: ISSUE) {
+  query PRSearch(
+    $after: String
+    $before: String
+    $first: Int
+    $last: Int
+    $q: String!
+  ) {
+    search(
+      after: $after
+      before: $before
+      first: $first
+      last: $last
+      query: $q
+      type: ISSUE
+    ) {
       nodes {
         ... on PullRequest {
           permalink
