@@ -13,7 +13,10 @@ import {
 function App() {
   const [language, setLanguage] = useState('javascript')
   const [query, setQuery] = useState('')
-  const queryString = `${query} in:title,body,comments is:pull-request language:${language} state:open -author:app/dependabot -author:snyk-bot sort:reactions`
+  const botsWeHate = ['app/dependabot', 'snyk-bot', 'app/pull']
+  const botFilter = botsWeHate.map((bot) => `-author:${bot}`).join(' ')
+  const today = new Date().toISOString().split('T')[0]
+  const queryString = `${query} in:title,body,comments is:pull-request language:${language} state:open ${botFilter} updated:>=${today} sort:interactions`
   const { data, error, loading, refetch } = useQuery(QUERY, {
     variables: { first: 10, q: queryString },
   })
