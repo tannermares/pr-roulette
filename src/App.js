@@ -93,6 +93,16 @@ function App() {
                 header: 'Title',
                 cell: 'title',
               },
+              {
+                id: 'repository',
+                header: 'Repository',
+                cell: ({ repository }) => repository.nameWithOwner,
+              },
+              {
+                id: 'stargazers',
+                header: 'StarGazers',
+                cell: ({ repository }) => repository.stargazerCount,
+              },
             ]}
             data={data?.search?.nodes || []}
             empty={<Text>EMPTY</Text>}
@@ -147,6 +157,11 @@ const QUERY = gql`
             ... on Bot {
               login
             }
+          }
+          repository {
+            name
+            nameWithOwner
+            stargazerCount
           }
         }
       }
