@@ -97,7 +97,7 @@ function App() {
             data={data?.search?.nodes || []}
             empty={<Text>EMPTY</Text>}
             loading={loading}
-            getRowLink={({ permalink }) => permalink}
+            onRowClick={({ permalink }) => window.open(permalink)}
           />
           <StackView axis="horizontal" distribution="center" spacing={2}>
             <Button
